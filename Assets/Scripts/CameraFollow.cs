@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Player
@@ -8,19 +7,6 @@ namespace Player
         [SerializeField] private Transform target;
         [SerializeField] private Vector3 offset = new Vector3(0f, 12f, -8f);
         [SerializeField] private float smoothSpeed = 8f;
-
-        private void Start()
-        {
-            var players = FindObjectsByType<ShooterPlayer>(FindObjectsSortMode.None);
-            foreach (var player in players)
-            {
-                if (player.IsOwner)
-                {
-                    target = player.transform;
-                    player.SetCamera(GetComponent<Camera>());
-                }
-            }
-        }
 
         public void SetTarget(Transform newTarget)
         {

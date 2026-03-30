@@ -1,9 +1,8 @@
-using Unity.Netcode;
 using UnityEngine;
 
 namespace Weapons
 {
-    public class Bullet : NetworkBehaviour
+    public class Bullet : MonoBehaviour
     {
         [SerializeField] private float speed = 30f;
         [SerializeField] private float lifetime = 3f;
@@ -19,15 +18,9 @@ namespace Weapons
             transform.rotation = Quaternion.LookRotation(direction);
         }
 
-        public override void OnNetworkSpawn()
+        private void Start()
         {
-            if(IsServer)
-                Invoke(nameof(DestroyBulletAfterTime), lifetime);
-        }
-
-        private void DestroyBulletAfterTime()
-        {
-            GetComponent<NetworkObject>().Despawn();
+            Destroy(gameObject, lifetime);
         }
 
         private void Update()
@@ -37,25 +30,16 @@ namespace Weapons
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!IsServer)
-                return;
-            
             if (_shooter != null && other.transform.IsChildOf(_shooter.transform))
                 return;
 
             if (other.TryGetComponent<ShooterPlayer>(out var player))
                 player.TakeDamage(damage);
 
-            HitEffectClientRpc(transform.position);
-            
-            GetComponent<NetworkObject>().Despawn();
-        }
-
-        [ClientRpc]
-        private void HitEffectClientRpc(Vector3 position)
-        {
-            var effect = Instantiate(hitEffectPrefab, position, Quaternion.identity);
+            var effect = Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
             Destroy(effect, 2f);
+
+            Destroy(gameObject);
         }
     }
 }

@@ -1,9 +1,7 @@
 using System.Collections;
-using Player;
-using Unity.Netcode;
 using UnityEngine;
 using Weapons;
-public class ShooterPlayer : NetworkBehaviour
+public class ShooterPlayer : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 7f;
@@ -39,12 +37,7 @@ public class ShooterPlayer : NetworkBehaviour
     private float _nextFireTime;
 
     private Camera _camera;
-
-    public void SetCamera(Camera cam)
-    {
-        _camera = cam;
-    }
-
+    
     private void Awake()
     {
         _camera = Camera.main;
@@ -52,7 +45,7 @@ public class ShooterPlayer : NetworkBehaviour
         animator = GetComponent<Animator>();
     }
 
-    public override void OnNetworkSpawn()
+    private void Start()
     {
         _currentHealth = maxHealth;
 
@@ -62,7 +55,7 @@ public class ShooterPlayer : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsAlive() || !IsOwner)
+        if (!IsAlive())
             return;
 
         HandleMovement();
@@ -107,25 +100,17 @@ public class ShooterPlayer : NetworkBehaviour
     {
         if (Input.GetMouseButton(0) && Time.time >= _nextFireTime)
         {
-            var direction = GetAimDirection();
-            ShootServerRpc(firePoint.position, direction);
+            Shoot();
             _nextFireTime = Time.time + fireRate;
         }
     }
 
-    [ServerRpc]
-    private void ShootServerRpc(Vector3 position, Vector3 direction)
+    private void Shoot()
     {
-        var bullet = Instantiate(bulletPrefab, position, Quaternion.identity);
+        var direction = GetAimDirection();
+        var bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
         bullet.Init(this, direction);
-        bullet.GetComponent<NetworkObject>().Spawn();
 
-        ShootClientRpc();
-    }
-
-    [ClientRpc]
-    private void ShootClientRpc()
-    {
         muzzleFlash.Play();
         _audioSource.PlayOneShot(shootSound);
 
@@ -205,6 +190,7 @@ public class ShooterPlayer : NetworkBehaviour
     {
         animator.SetTrigger(hash);
     }
-
+    
     public bool IsAlive() => _currentHealth > 0;
+    
 }
